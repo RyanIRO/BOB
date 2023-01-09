@@ -29,7 +29,6 @@ log=open("BOBlogs.txt","w")
 options=webdriver.ChromeOptions()
 user=pathlib.Path().home()
 options.add_argument(f"user-data-dir={user}/AppData/Local/Google/Chrome/User Data/")
-#driver=webdriver.Chrome('C:\driver\chromedriver.exe',chrome_options=options)
 driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()),chrome_options=options)
 wait=WebDriverWait(driver, 100)
 #----------------------------Data----------------------------------------------------------------
@@ -50,9 +49,6 @@ lotesref=[]
 CHAT_NAME = ''
 CITY=''
 DATA_GROUPS = {}
-#allowedChats=["Prueba2","PruebaBot","AndrésN"]
-#allowedChatstmp=ctcs.readlines()
-#allowedChats=allowedChatstmp[0].split(",")
 contacts=getcontacts()
 tpg=contacts[0]
 org=contacts[1]
@@ -60,7 +56,6 @@ ptg=contacts[2]
 allowedChats=tpg+org+ptg
 for chatGroupName in allowedChats:#TO DEFINE THE MATRIX AT START
     DATA_GROUPS[chatGroupName] = {}
-
 print('Group chats allowed: ' + str(allowedChats))
 nonwordlist=['Tú:','You:','']
 mssg=['Estoy listo para comenzar','Envíe las imagenes por favor, al finalizar ingrese un *#* para completar el envío.']
@@ -69,19 +64,19 @@ listHashIMG=[]
 checkedIMGSBytes = []
 
 #---------------------------------OtherConfigs----------------------------------------------------
-abs_path = str(pathlib.Path().absolute())
+abs_path = str(pathlib.Path().absolute())#Absolute Path
 #---------------------------------Regexs----------------------------------------------------------
-refex= r.compile(r"^B+[0-9]+[0-9]+[0-9]+[0-9]")
-regex1=r.compile(r"^[0-9]")
-regexlote=r.compile(r"^L+[0-9]")
+refex= r.compile(r"^B+[0-9]+[0-9]+[0-9]+[0-9]")#validate entered ref 
+regex1=r.compile(r"^[0-9]") #validate ref selecction
+regexlote=r.compile(r"^L+[0-9]") #validate batch selection
 regex2=r.compile(r"^[0-9]+[0-9]")
-regexhora=r.compile(r"[0-9]+:+[0-9]+[0-9]")
+regexhora=r.compile(r"[0-9]+:+[0-9]+[0-9]")#get time(HH:MM )
 #-----------------------------------------Functions--------------------------------------------------
 #-----------------------------------------city------------------------------------------------------
-def citygroup(grupo):
-    global ptg
-    global org
-    global tpg
+def citygroup(grupo):#check to witch city a gruop belongs
+    global ptg#Potosí
+    global org#Oruro
+    global tpg#Tupiza
 
     #grupo= wait.until(EC.presence_of_element_located((By.XPATH,"//*[@class='_21nHd']"))).text
     if grupo in ptg:
@@ -91,13 +86,14 @@ def citygroup(grupo):
     if grupo in tpg:
         return 'tp'
 #-----------------------------------------actualizar------------------------------------------------
-def update():    
-        global datamenus
+def update():#update and  organize references into arrays obtained from dictionaries
+        global datamenus #dict
         datamenus['Potosi']=[]
         datamenus['Oruro']=[]
         datamenus['Tupiza']=[]
         datadict=getdata()
         for sede in datadict:
+
                         if sede['SEDE']=='Oruro':
                             datamenus['Oruro'].append(sede)
                         if sede['SEDE']=='Iska Iska':
@@ -118,14 +114,14 @@ def update():
     log.write("INFO: "+"menu refs made"+" "+menumssg+" "+str(datetime.datetime.now()))
     return menumssg"""
 
-def makeMenu(datamenus,grupo):
+def makeMenu(datamenus,grupo):#make menu by city 
     menumssg='Los trabajos disponibles son:\n'
     finalmssg='Si desea cambiar de referencia envíe "cambiar referencia"'
     city=citygroup(grupo)
     if city=='pt':
          for pt in datamenus['Potosi']:
-               indice=str(datamenus['Potosi'].index(pt))+': '
-               menumssg=menumssg+indice+pt["REFERENCIA (CARPETA)"]+'\n' 
+               indice=str(datamenus['Potosi'].index(pt))+': '# menu index
+               menumssg=menumssg+indice+pt["REFERENCIA (CARPETA)"]+'\n' #menu message
     if city=='or':
          for pt in datamenus['Oruro']:
                indice=str(datamenus['Oruro'].index(pt))+': '
@@ -139,7 +135,7 @@ def makeMenu(datamenus,grupo):
     log.write("INFO: "+"menu refs made"+" "+menumssg+" "+str(datetime.datetime.now()))
     return menumssg
 #-----------------------------------------MenuLotes--------------------------------
-def makeMenuLote(index):
+def makeMenuLote(index): #make batchs menu by ref selected 
     global datamenus
     global lotesref
     global lotedir
@@ -148,46 +144,46 @@ def makeMenuLote(index):
     grupo=CHAT_NAME
     finalmssg='Si desea cambiar de lote envíe "cambiar lote"'
     city=citygroup(grupo)
-    if city=='pt':
+    if city=='pt':#by city 
         lotes=datamenus['Potosi'][index]['LOTES/DETALLE (SUB-CARPETA)']
         if lotes != '-' and lotes!='FECHA' and lotes!='R':
             menulotemssg='La referencia *'+datamenus['Tupiza'][index]['REFERENCIA (CARPETA)']+'* tiene:\n'
-            for lote in lotes.split(','):
+            for lote in lotes.split(','):#put batches in an array
                 lotesref.append(lote)
-            for lote in lotesref:
-                indice=str(lotesref.index(lote))
+            for lote in lotesref:#loop batch array 
+                indice=str(lotesref.index(lote))#batch menu index 
                 menulotemssg=menulotemssg+'L'+ indice +":  "+str(lote)+'\n'
-            menulotemssg=menulotemssg+finalmssg
+            menulotemssg=menulotemssg+finalmssg#batch menu message
             flaglotes=True
             return menulotemssg
         else:
             flaglotes=False
             lotedir=lotes
-    if city=='or':
+    if city=='or':#by city 
         lotes=datamenus['Oruro'][index]['LOTES/DETALLE (SUB-CARPETA)']
         if lotes != '-' and lotes!='FECHA'and lotes!='R':
             menulotemssg='La referencia *'+datamenus['Tupiza'][index]['REFERENCIA (CARPETA)']+'* tiene:\n'
-            for lote in lotes.split(','):
-                lotesref.append(lote)
-            for lote in lotesref:
-                indice=str(lotesref.index(lote))
+            for lote in lotes.split(','):#put batches in an array
+                lotesref.append(lote) 
+            for lote in lotesref:#loop batch array
+                indice=str(lotesref.index(lote))#batch menu index 
                 menulotemssg=menulotemssg+'L'+ indice +":  "+str(lote)+'\n'
-            menulotemssg=menulotemssg+finalmssg
+            menulotemssg=menulotemssg+finalmssg#batch menu message
             flaglotes=True
             return menulotemssg
         else:
             flaglotes=False
             lotedir=lotes
-    if city=='tp':
+    if city=='tp':#by city 
         lotes=datamenus['Tupiza'][index]['LOTES/DETALLE (SUB-CARPETA)']
         if lotes != '-' and lotes!='FECHA'and lotes!='R':
             menulotemssg='La referencia *'+datamenus['Tupiza'][index]['REFERENCIA (CARPETA)']+'* tiene:\n'
-            for lote in lotes.split(','):
+            for lote in lotes.split(','):#put batches in an array
                 lotesref.append(lote)
-            for lote in lotesref:
-                indice=str(lotesref.index(lote))
+            for lote in lotesref:#loop batch array 
+                indice=str(lotesref.index(lote))#batch menu index 
                 menulotemssg=menulotemssg+'L'+ indice +":  "+str(lote)+'\n'
-            menulotemssg=menulotemssg+finalmssg
+            menulotemssg=menulotemssg+finalmssg#batch menu message
             flaglotes=True
             return menulotemssg
         else:
@@ -196,7 +192,7 @@ def makeMenuLote(index):
     
 #-------------------------------------------WPPUse-----------------------------------------------------
 #----------------------------------------Validate------------------------------
-def validate():
+def validate():#validate upload of WhatsApp chats 
     try:
           validate=driver.find_element(By.XPATH,"//*[@class='_1RAKT']")
           if validate:
@@ -217,7 +213,7 @@ def validate():
     except Exception as e:
         print(e)"""
 #-------------------------------------------SelectChat-----------------------------------
-def selectChat2():
+def selectChat2():#select authorized chat with new messages
     global flagchat
     global CHAT_NAME
     global CITY
@@ -239,17 +235,17 @@ def selectChat2():
         
     #chatswithnewmms=wait.until(EC.presence_of_all_elements_located((By.XPATH,"//*[@class='_2nY6U vq6sj _3C4Vf']")))
     chatswithnewmms=driver.find_elements(By.XPATH,"//*[@class='_2nY6U vq6sj _3C4Vf']")
-    for chat in chatswithnewmms:
+    for chat in chatswithnewmms:#loop in chats with new messages 
             #Pendingchats=chat.find_elements(By.XPATH,"//*[@class='_2nY6U vq6sj _3C4Vf']")
             #index=chatswithnewmms.index(chat)
             try:
                 chat.find_element(By.XPATH,"//*[@class='_1pJ9J']")
-                Pendingchat=chat.text.split("\n")
+                Pendingchat=chat.text.split("\n")#get the latest chat with new messages
                 #Pendingchat=Pendingchats[index].find_element(By.CSS_SELECTOR,'span').get_attribute('title')
                 #Pendingchat=Pendingchats[index].find_element(By.CSS_SELECTOR,'span').text
                 # print(f'on chat list: {Pendingchat[0]}')
-                if Pendingchat[0] in allowedChats:
-                    target = Pendingchat[0]
+                if Pendingchat[0] in allowedChats:#check if it is an allowed chat 
+                    target = Pendingchat[0]#define target
                     try: 
                             #search_box= wait.until(EC.presence_of_element_located((By.XPATH,"//*[@data-testid='chat-list-search']")))
                             #search_box.send_keys(target.replace('"',''))
@@ -277,7 +273,7 @@ def selectChat2():
                 pass
     return False
 #----------------------------------------------GetBytes---------------------------------------------------
-def GetData(uri):
+def GetData(uri):#get Images Bytes from WhatsApp
     result= driver.execute_async_script("""
        var uri= arguments[0];
        var callback=arguments[1];
@@ -289,15 +285,15 @@ def GetData(uri):
        xhr.open('GET', uri);
        xhr.send(); 
 
-    """,uri)
+    """,uri)#request (img bytes)
     if type(result)==int:
         log.write("ERROR: "+"bad request"+result+" "+str(datetime.datetime.now()))
         raise Exception("Request failed with status %s"%result)
     log.write("INFO: "+"request succesfuly"+result+" "+str(datetime.datetime.now()))
-    return base64.b64decode(result)
+    return base64.b64decode(result)#return decode info
 
 #----------------------------------------------DownloadIMGS------------------------------------------------
-def downloadIMG(path,ref,lote):
+def downloadIMG(path,ref,lote):#write images bytes  in set directory
     print(path)
     print(ref)
     print(lote)
@@ -315,16 +311,16 @@ def downloadIMG(path,ref,lote):
     firstpic_box = wait.until(EC.presence_of_element_located((By.XPATH, firstpic_boxpath)))
     firstpic_box = firstpic_box.find_elements(By.XPATH, "*")
     sleep(1)
-    firstpic_box[0].click()
+    firstpic_box[0].click()# click on the first image sent
     previouspic='//*[@id="app"]/div/span[3]/div/div/div[2]/div/div[2]/div[3]/div/div'
     previouspic = wait.until(EC.presence_of_element_located((By.XPATH,previouspic)))
-    while previouspic.get_attribute('aria-disabled') == 'false':
+    while previouspic.get_attribute('aria-disabled') == 'false': #Check if it´s a first pic
         previouspic.click()
     hourimg=wait.until(EC.presence_of_element_located((By.XPATH,"/html/body/div[1]/div/span[3]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[2]/div"))).text
     hourtocomp=regexhora.findall(hourimg)
     hora=datetime.datetime.strptime(hourtocomp[0],"%H:%M")
-    horaofitc=hora.hour+hora.minute
-    while True:
+    horaofitc=hora.hour+hora.minute#get get shipping time
+    while True:#loop in image carousel to get bytes
         
         img_box='//*[@id="app"]/div/span[3]/div/div/div[2]/div/div[2]/div[2]/div/div/div/div/div[2]/div/img'
         wait.until(EC.presence_of_element_located((By.XPATH,img_box)))
@@ -335,12 +331,12 @@ def downloadIMG(path,ref,lote):
         hourimgt=regexhora.findall(hourimg)
         hour=datetime.datetime.strptime(hourimgt[0],"%H:%M")
         hourimgtd=hour.hour+hour.minute
-        if hourimgtd in range(DATA_GROUPS[CHAT_NAME]['TIMELIMIT'], horaofitc+1):
-            img_bytes=GetData(src)
+        if hourimgtd in range(DATA_GROUPS[CHAT_NAME]['TIMELIMIT'], horaofitc+1):#compare time to limit download
+            img_bytes=GetData(src)#get bytes
             listIMG.append(img_bytes)
             nextpic_box='/html/body/div[1]/div/span[3]/div/div/div[2]/div/div[2]/div[1]/div/div'
             nextpic_box = wait.until(EC.presence_of_element_located((By.XPATH,nextpic_box)))
-            if nextpic_box.get_attribute('aria-disabled') == 'true':
+            if nextpic_box.get_attribute('aria-disabled') == 'true':#carousel exit
                     close_button = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@data-testid='x-viewer']")))
                     driver.execute_script("arguments[0].click();", close_button)
 
@@ -351,21 +347,21 @@ def downloadIMG(path,ref,lote):
                     driver.execute_script("arguments[0].click();", nextpic_box)
         else: 
             break   
-    if bool(listIMG):
+    if bool(listIMG):#check if the list is not empty
         log.write("INFO: "+"images bytes fetched succesfuly"+str(len(listIMG))+" "+str(datetime.datetime.now()))
         for imgB in listIMG:
             hashBytes=hashlib.sha256(imgB).hexdigest()
-            if hashBytes not in checkedIMGSBytes:
+            if hashBytes not in checkedIMGSBytes:#check if the image was already downloaded
                     try:
-                        if imgB==NULL:
+                        if imgB==NULL:#check existence of bytes
                             continue
-                        if len(ref)<=1:
+                        if len(ref)<=1:#validate reference name
                             ref="NoRef"
-                        if lote=="FECHA":
+                        if lote=="FECHA":#assign download date
                             lote=datetime.datetime.today().strftime('%d-%B-%Y').upper()
-                        file_path=path+'/AHK'+ref+'_'+lote+'_'+str(numb_file)+'.jpg'
+                        file_path=path+'/AHK'+ref+'_'+lote+'_'+str(numb_file)+'.jpg'#define path/name
                         print('file path:' + file_path)
-                        open(file_path,'wb').write(imgB)
+                        open(file_path,'wb').write(imgB)#save img
                         numb_file=numb_file+1
                         checkedIMGSBytes.append(hashBytes)
                         log.write("INFO: "+"bytes write succesfuly"+file_path+" "+str(datetime.datetime.now()))
@@ -375,47 +371,35 @@ def downloadIMG(path,ref,lote):
         sendMessage("Descarga exitosa")
         timetld=0
         try:
-            update()
+            update()#update menus
             menu=makeMenu(datamenus)
             log.write("INFO: "+"references updated succesfuly"+menu+" "+str(datetime.datetime.now()))
         except Exception as e:
             log.write("ERROR: "+"can'/t update references"+e+" "+str(datetime.datetime.now()))
             print(e)
-        #ex=driver.find_element(By.XPATH,"/html/body/div[1]/div/span[3]/div/div/div[2]/div/div[1]/div[2]/div/div[6]/div/span")
-        #ex.click()
-        #ex2=driver.find_element(By.XPATH,"/html/body/div[1]/div/div/div[5]/span/div/span/div/header/div/div[1]/div")
-        #ex2.click()
         close_button = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@data-testid='x-viewer']")))
         driver.execute_script("arguments[0].click();", close_button)
-        #ex=driver.find_element(By.XPATH,"/html/body/div[1]/div/span[3]/div/div/div[2]/div/div[1]/div[2]/div/div[6]/div/span")
-        #ex.click()
         close_button2 = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="app"]/div/div/div[5]/span/div/span/div/header/div/div[1]/div')))
         driver.execute_script("arguments[0].click();", close_button2)
-        webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()#close active chat 
 #------------------------------------------Messages----------------------------------
 #------------------------------------------IdentifyMessage---------------------------
-def identifyMessage():
+def identifyMessage():#identify message sent by user
     
     try:
         text_element_box_message = driver.find_elements(By.CLASS_NAME,"_22Msk")
         position = len(text_element_box_message)-1
-        #text=whosendmssg()
-        #if text not in nonwordlist:
         element_message=text_element_box_message[position].find_elements(By.CLASS_NAME,'_1Gy50') 
         mssgrec=element_message[0].text.upper().strip()
-        #print("received")
-        #who=whosendmssg()
-        #if who not in nonwordlist: 
         print('Identified msg: ' + str(mssgrec))
-        return mssgrec   
-        #else:
-         #   return
+        return mssgrec   #return user message
+        
     except Exception:
             mssgrec=''
             log.write("ERROR: "+"can'/t identify message, allocating blank space to continue operation"+" "+str(datetime.datetime.now()))
             identifyMessage()
 #------------------------------------------ResponseMessage---------------------------
-def responsemssg(mssgrec,menumssg,regex):
+def responsemssg(mssgrec,menumssg,regex):#prepare response according to message sent by the user,execute action according to message
     global datamenus
     global menu
     global refdir
@@ -430,7 +414,7 @@ def responsemssg(mssgrec,menumssg,regex):
     print("Thinking of an answer ")
     messages=['HOLA BOB','HEY BOB','HELLO BOB','HI BOB']
     try:
-        #city=citygroup(CHAT_NAME)
+       
         if mssgrec in messages:
             try:
                 update()
@@ -439,20 +423,20 @@ def responsemssg(mssgrec,menumssg,regex):
             except Exception as e:
                 log.write("ERROR: "+"can'/t update references"+e+" "+str(datetime.datetime.now()))
                 print(e)
-            #flagchat=True
+           
             sendMessage(menu)
-        if mssgrec=='CAMBIAR REFERENCIA':
+        if mssgrec=='CAMBIAR REFERENCIA':#validate keyword
             update()
             menumssg=makeMenu(datamenus,CHAT_NAME)
             sendMessage(menumssg)
             menulote=''
-        if mssgrec=='CAMBIAR LOTE':
+        if mssgrec=='CAMBIAR LOTE':#validate keyword
             update()
             menulote=makeMenuLote(refdir)
             sendMessage(menulote)
         if regex.search(mssgrec):       #VALIDATE MSG WHEN IT'S A REF
             refdir=int(mssgrec)
-            #lotes=getdata(True)
+           
             menulote=makeMenuLote(refdir)
             if CHAT_NAME in ptg:
                 DATA_GROUPS[CHAT_NAME]['REF'] = datamenus['Potosi'][refdir]['REFERENCIA (CARPETA)']
@@ -491,7 +475,7 @@ def responsemssg(mssgrec,menumssg,regex):
             saving_folderdonwload=makeDirectory(DATA_GROUPS[CHAT_NAME]['REF'], DATA_GROUPS[CHAT_NAME]['LOT'])     
             DATA_GROUPS[CHAT_NAME]['FOLDER'] = saving_folderdonwload   
             lotesref=[]
-        if mssgrec=="#":
+        if mssgrec=="#":#validate keyword
             flagchat=False
             downloadIMG(DATA_GROUPS[CHAT_NAME]['FOLDER'],DATA_GROUPS[CHAT_NAME]['REF'],DATA_GROUPS[CHAT_NAME]['LOT'])
         """if mssgrec=="ACTUALIZAR":
@@ -507,7 +491,7 @@ def responsemssg(mssgrec,menumssg,regex):
         sleep(1)
         responsemssg(mssgrec,menumssg,regex)
 #----------------------------------------SendMessage--------------------------------------
-def sendMessage(mssg):
+def sendMessage(mssg):#send messages to user
     chatbox_path='//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]/p'
     try:
         chatbox=wait.until(EC.presence_of_element_located((By.XPATH,chatbox_path)))
@@ -527,7 +511,8 @@ def sendMessage(mssg):
         log.write("ERROR: "+"can'/t send message"+mssg+str(datetime.datetime.now()))
 #----------------------------------------Directories--------------------------------------
 #----------------------------------------Make/use Directory-------------------------------
-def makeDirectory(ref,lotedir):
+def makeDirectory(ref,lotedir):#create new directory or use an existent directory
+    #define path according to work
     if lotedir!='-':
         saving_folder=abs_path+'/'+ref+'/'+lotedir
     if lotedir=='-' or lotedir == 'R':
@@ -549,7 +534,7 @@ def makeDirectory(ref,lotedir):
         log.write("INFO: "+"directory already exists"+saving_folder+str(datetime.datetime.now()))
         return saving_folder
 #-------------------------------------------main-------------------------------------------
-def botwpp():
+def botwpp():#main function
     log.write("INFO: "+"BOB starts workign"+str(datetime.datetime.now()))
     global menu
     global nonwordlist
@@ -569,17 +554,12 @@ def botwpp():
         if not chat:
             continue
         elif chat:
-            #while True:
+            
             mssg=identifyMessage()
-            #who=whosendmssg()
-            #if who not in nonwordlist:
+            
             responsemssg(mssg,menu,regex1)
             webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-            #if not flagchat:
-            #else:
-                 
-               #break                       
-            #webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-while True:
+            
+while True:#continuous execution of main function
     botwpp()
 
